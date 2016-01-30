@@ -35,8 +35,8 @@
 #include "mutex.h"
 #include "xtimer.h"
 
-#ifndef STDIN_POLL_INTERVAL
-#define STDIN_POLL_INTERVAL 50000U
+#ifndef STDIO_POLL_INTERVAL
+#define STDIO_POLL_INTERVAL 50000U
 #endif
 
 #define MIN(a, b)        (((a) < (b)) ? (a) : (b))
@@ -69,6 +69,11 @@ static char down_buffer [STDIO_RX_BUFSIZE];
  * @brief flag that enables stdin polling
  */
 static char stdin_enabled = 0;
+
+/**
+ * @brief flag that enables stdout blocking/polling
+ */
+static char blocking_stdout = 0;
 
 /**
  * @brief SEGGER's ring buffer implementation
@@ -223,12 +228,22 @@ int rtt_write(const char* buf_ptr, unsigned num_bytes) {
 }
 
 void uart_stdio_init(void) {
-    //This is provided so that newlib has something to call
+    #ifndef RTT_STDIO_DISABLE_STDIN
+    stdin_enabled = 1;
+    #endif
+
+    #ifdef RTT_STDIO_ENABLE_BLOCKING_STDOUT
+    blocking_stdout = 1;
+    #endif
 }
 
 void rtt_stdio_enable_stdin(void) {
     stdin_enabled = 1;
     mutex_unlock(&_rx_mutex);
+}
+
+void rtt_stdio_enable_blocking_stdout(void) {
+    blocking_stdout = 1;
 }
 
 // The reason we have this strange logic is as follows:
@@ -247,7 +262,7 @@ int uart_stdio_read(char* buffer, int count) {
         }
         uint32_t last_wakeup = xtimer_now();
         while(1) {
-          xtimer_usleep_until(&last_wakeup, STDIN_POLL_INTERVAL);
+          xtimer_usleep_until(&last_wakeup, STDIO_POLL_INTERVAL);
           res = rtt_read(buffer, count);
           if (res > 0)
             return res;
@@ -257,6 +272,11 @@ int uart_stdio_read(char* buffer, int count) {
 }
 
 int uart_stdio_write(const char* buffer, int len) {
-    rtt_write(buffer, len);
-    return len;
+    int written = rtt_write(buffer, len);
+    uint32_t last_wakeup = xtimer_now();
+    while (blocking_stdout && written < len) {
+        xtimer_usleep_until(&last_wakeup, STDIO_POLL_INTERVAL);
+        written += rtt_write(&buffer[written], len-written);
+    }
+    return written;
 }

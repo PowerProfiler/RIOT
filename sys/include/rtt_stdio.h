@@ -53,9 +53,18 @@ int uart_stdio_read(char* buffer, int len);
 int uart_stdio_write(const char* buffer, int len);
 
 /**
- * @brief enable stdin polling, at a power consumption cost
+ * @brief enable stdin polling, at a power consumption cost. This is enabled
+ *        by default unless RTT_STDIO_DISABLE_STDIN is defined.
  */
 void rtt_stdio_enable_stdin(void);
+
+/**
+ * @brief enable stdout blocking and free space polling. This must be done
+ *        with caution because if there is no RTT client attached, all
+ *        writes to stdout will block indefinitely. This can be enabled
+ *        automatically by defining RTT_STDIO_ENABLE_BLOCKING_STDOUT
+ */
+void rtt_stdio_enable_blocking_stdout(void);
 
 #ifdef __cplusplus
 }

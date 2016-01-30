@@ -293,6 +293,10 @@ ifneq (,$(filter posix_sockets,$(USEMODULE)))
   USEMODULE += random
 endif
 
+ifneq (,$(filter rtt_stdio,$(USEMODULE)))
+  USEMODULE += xtimer
+endif
+
 ifneq (,$(filter uart_stdio,$(USEMODULE)))
   USEMODULE += tsrb
 endif
