@@ -283,7 +283,9 @@ ifneq (,$(filter gnrc_pktdump,$(USEMODULE)))
 endif
 
 ifneq (,$(filter newlib,$(USEMODULE)))
-  USEMODULE += uart_stdio
+  ifeq (,$(filter rtt_stdio,$(USEMODULE)))
+    USEMODULE += uart_stdio
+  endif
 endif
 
 ifneq (,$(filter posix_sockets,$(USEMODULE)))
