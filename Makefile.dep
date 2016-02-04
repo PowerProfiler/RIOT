@@ -283,12 +283,18 @@ ifneq (,$(filter gnrc_pktdump,$(USEMODULE)))
 endif
 
 ifneq (,$(filter newlib,$(USEMODULE)))
-  USEMODULE += uart_stdio
+  ifeq (,$(filter rtt_stdio,$(USEMODULE)))
+    USEMODULE += uart_stdio
+  endif
 endif
 
 ifneq (,$(filter posix_sockets,$(USEMODULE)))
   USEMODULE += posix
   USEMODULE += random
+endif
+
+ifneq (,$(filter rtt_stdio,$(USEMODULE)))
+  USEMODULE += xtimer
 endif
 
 ifneq (,$(filter uart_stdio,$(USEMODULE)))
