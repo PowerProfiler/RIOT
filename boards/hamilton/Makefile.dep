@@ -3,6 +3,8 @@ ifneq (,$(filter gnrc_netif_default,$(USEMODULE)))
   USEMODULE += gnrc_nomac
 endif
 
+USEMODULE += rtt_stdio
+
 ifneq (,$(filter saul_default,$(USEMODULE)))
   USEMODULE += saul_gpio
 endif
