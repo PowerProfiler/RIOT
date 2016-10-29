@@ -119,6 +119,12 @@ static int init_base(uart_t uart, uint32_t baudrate)
             return -1;
     }
 
+    /* Make sure port and dev are != NULL here, i.e. that the variables are
+     * assigned in all non-returning branches of the switch at the top of this
+     * function. */
+    assert(port != NULL);
+    assert(dev != NULL);
+
     /* uart_configure RX and TX pins, set pin to use alternative function mode */
     port->MODER &= ~(3 << (rx_pin * 2) | 3 << (tx_pin * 2));
     port->MODER |= 2 << (rx_pin * 2) | 2 << (tx_pin * 2);
@@ -178,8 +184,12 @@ void uart_write(uart_t uart, const uint8_t *data, size_t len)
             return;
     }
 
+    /* Make sure dev is != NULL here, i.e. that the variable is assigned in
+     * all non-returning branches of the switch at the top of this function. */
+    assert(dev != NULL);
+
     for (size_t i = 0; i < len; i++) {
-        while (!(dev->ISR & USART_ISR_TXE));
+        while (!(dev->ISR & USART_ISR_TXE)) {}
         dev->TDR = data[i];
     }
 }
@@ -187,8 +197,12 @@ void uart_write(uart_t uart, const uint8_t *data, size_t len)
 static inline void irq_handler(uint8_t uartnum, USART_TypeDef *dev)
 {
     if (dev->ISR & USART_ISR_RXNE) {
-        char data = (char)dev->RDR;
+        uint8_t data = (uint8_t)dev->RDR;
         uart_config[uartnum].rx_cb(uart_config[uartnum].arg, data);
+    }
+    else if (dev->ISR & USART_ISR_ORE) {
+        /* do nothing on overrun */
+        dev->ICR |= USART_ICR_ORECF;
     }
     if (sched_context_switch_request) {
         thread_yield();

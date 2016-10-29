@@ -20,6 +20,7 @@
 #ifdef MODULE_GNRC_SLIP
 
 #include "board.h"
+#include "net/gnrc/netdev2.h"
 #include "net/gnrc/nomac.h"
 #include "net/gnrc.h"
 
@@ -38,7 +39,9 @@ static gnrc_slip_dev_t slip_devs[SLIP_NUM];
  * @{
  */
 #define SLIP_STACKSIZE          (THREAD_STACKSIZE_DEFAULT)
-#define SLIP_PRIO               (THREAD_PRIORITY_MAIN - 4)
+#ifndef SLIP_PRIO
+#define SLIP_PRIO               (GNRC_NETDEV2_MAC_PRIO)
+#endif
 
 /**
  * @brief   Stacks for the MAC layer threads
@@ -47,7 +50,7 @@ static char _slip_stacks[SLIP_STACKSIZE][SLIP_NUM];
 
 void auto_init_slip(void)
 {
-    for (int i = 0; i < SLIP_NUM; i++) {
+    for (unsigned int i = 0; i < SLIP_NUM; i++) {
         const gnrc_slip_params_t *p = &gnrc_slip_params[i];
         DEBUG("Initializing SLIP radio at UART_%d\n", p->uart);
         kernel_pid_t res = gnrc_slip_init(&slip_devs[i], p->uart, p->baudrate,

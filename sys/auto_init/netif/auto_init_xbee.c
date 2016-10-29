@@ -20,6 +20,7 @@
 #ifdef MODULE_XBEE
 
 #include "board.h"
+#include "net/gnrc/netdev2.h"
 #include "net/gnrc/nomac.h"
 #include "net/gnrc.h"
 
@@ -38,7 +39,9 @@ static xbee_t xbee_devs[XBEE_NUM];
  * @{
  */
 #define XBEE_MAC_STACKSIZE           (THREAD_STACKSIZE_DEFAULT)
-#define XBEE_MAC_PRIO                (THREAD_PRIORITY_MAIN - 4)
+#ifndef XBEE_MAC_PRIO
+#define XBEE_MAC_PRIO                (GNRC_NETDEV2_MAC_PRIO)
+#endif
 
 /**
  * @brief   Stacks for the MAC layer threads
@@ -50,14 +53,10 @@ void auto_init_xbee(void)
     for (size_t i = 0; i < XBEE_NUM; i++) {
         const xbee_params_t *p = &xbee_params[i];
         DEBUG("Initializing XBee radio at UART_%i\n", p->uart);
-        int res = xbee_init(&xbee_devs[i],
-                p->uart,
-                p->baudrate,
-                p->sleep_pin,
-                p->status_pin);
+        int res = xbee_init(&xbee_devs[i], (xbee_params_t*) p);
 
         if (res < 0) {
-            DEBUG("Error initializing XBee radio device!");
+            DEBUG("Error initializing XBee radio device!\n");
         }
         else {
             gnrc_nomac_init(_nomac_stacks[i],

@@ -30,14 +30,14 @@ static inline void _rtr_sol_reschedule(gnrc_ipv6_netif_t *iface, uint32_t sec_de
 {
     xtimer_remove(&iface->rtr_sol_timer);
     iface->rtr_sol_msg.type = GNRC_SIXLOWPAN_ND_MSG_MC_RTR_SOL;
-    iface->rtr_sol_msg.content.ptr = (char *) iface;
+    iface->rtr_sol_msg.content.ptr = iface;
     xtimer_set_msg(&iface->rtr_sol_timer, sec_delay * SEC_IN_USEC, &iface->rtr_sol_msg,
                    gnrc_ipv6_pid);
 }
 
 static inline uint32_t _binary_exp_backoff(uint32_t base_sec, unsigned int exp)
 {
-    return genrand_uint32_range(0, (1 << exp)) * base_sec;
+    return random_uint32_range(0, (1 << exp)) * base_sec;
 }
 
 static inline void _revert_iid(uint8_t *iid)
@@ -124,22 +124,15 @@ kernel_pid_t gnrc_sixlowpan_nd_next_hop_l2addr(uint8_t *l2addr, uint8_t *l2addr_
     ipv6_addr_t *next_hop = NULL;
     gnrc_ipv6_nc_t *nc_entry = NULL;
 
-#ifdef MODULE_GNRC_IPV6_EXT_RH
-    ipv6_hdr_t *hdr;
-    gnrc_pktsnip_t *ipv6;
-    LL_SEARCH_SCALAR(pkt, ipv6, type, GNRC_NETTYPE_IPV6);
-    assert(ipv6);
-    hdr = ipv6->data;
-    next_hop = ipv6_ext_rh_next_hop(hdr);
-#endif
 #ifdef MODULE_FIB
+    kernel_pid_t fib_iface;
     ipv6_addr_t next_hop_actual;    /* FIB copies address into this variable */
     /* don't look-up link local addresses in FIB */
     if ((next_hop == NULL) && !ipv6_addr_is_link_local(dst)) {
         size_t next_hop_size = sizeof(ipv6_addr_t);
         uint32_t next_hop_flags = 0;
         if ((next_hop == NULL) &&
-            (fib_get_next_hop(&gnrc_ipv6_fib_table, &iface, next_hop_actual.u8, &next_hop_size,
+            (fib_get_next_hop(&gnrc_ipv6_fib_table, &fib_iface, next_hop_actual.u8, &next_hop_size,
                               &next_hop_flags, (uint8_t *)dst,
                               sizeof(ipv6_addr_t), 0) >= 0) &&
             (next_hop_size == sizeof(ipv6_addr_t))) {
@@ -150,6 +143,11 @@ kernel_pid_t gnrc_sixlowpan_nd_next_hop_l2addr(uint8_t *l2addr, uint8_t *l2addr_
 #ifdef MODULE_GNRC_SIXLOWPAN_ND_ROUTER
     /* next hop determination: https://tools.ietf.org/html/rfc6775#section-6.5.4 */
     nc_entry = gnrc_ipv6_nc_get(iface, dst);
+#ifdef MODULE_FIB
+    if ((next_hop != NULL) && (nc_entry == NULL)) {
+        nc_entry = gnrc_ipv6_nc_get(fib_iface, dst);
+    }
+#endif
     /* if NCE found */
     if (nc_entry != NULL) {
         gnrc_ipv6_netif_t *ipv6_if = gnrc_ipv6_netif_get(nc_entry->iface);
@@ -230,7 +228,7 @@ void gnrc_sixlowpan_nd_rtr_sol_reschedule(gnrc_ipv6_nc_t *nce, uint32_t sec_dela
     gnrc_ipv6_netif_t *iface = gnrc_ipv6_netif_get(nce->iface);
     xtimer_remove(&iface->rtr_sol_timer);
     iface->rtr_sol_msg.type = GNRC_SIXLOWPAN_ND_MSG_MC_RTR_SOL;
-    iface->rtr_sol_msg.content.ptr = (char *) iface;
+    iface->rtr_sol_msg.content.ptr = iface;
     xtimer_set_msg(&iface->rtr_sol_timer, sec_delay * SEC_IN_USEC, &iface->rtr_sol_msg,
                    gnrc_ipv6_pid);
 }

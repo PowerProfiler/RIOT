@@ -15,8 +15,10 @@
  * @author          Thomas Eichinger <thomas.eichinger@fu-berlin.de>
  */
 
-#ifndef __CPU_CONF_H
-#define __CPU_CONF_H
+#ifndef CPU_CONF_H
+#define CPU_CONF_H
+
+#include "cpu_conf_common.h"
 
 #include "atmel/saml21.h"
 
@@ -33,14 +35,9 @@ extern "C" {
 #define CPU_FLASH_BASE                  FLASH_ADDR
 /** @} */
 
-/**
- * @brief CPUID_ID_LEN length of cpuid in bytes
- */
-#define CPUID_ID_LEN (16) /* 128 bits long, 16 bytes long */
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __CPU_CONF_H */
+#endif /* CPU_CONF_H */
 /** @} */

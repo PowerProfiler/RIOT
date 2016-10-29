@@ -16,9 +16,10 @@
  * @author          Ian Martin <ian@locicontrols.com>
  */
 
-#ifndef __CPU_CONF_H
-#define __CPU_CONF_H
+#ifndef CPU_CONF_H
+#define CPU_CONF_H
 
+#include "cpu_conf_common.h"
 #include "cc2538.h"
 #include "cc2538_gpio.h"
 #include "cc2538_uart.h"
@@ -41,16 +42,9 @@ extern "C" {
 #define CPU_FLASH_BASE                  FLASH_BASE
 /** @} */
 
-/**
- * @brief   length of CPU ID for @ref cpuid_get() in @ref periph/cpuid.h
- */
-#ifndef CPUID_ID_LEN
-#define CPUID_ID_LEN                    8
-#endif
-
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif
 
-#endif /* __CPU_CONF_H */
+#endif /* CPU_CONF_H */
 /** @} */

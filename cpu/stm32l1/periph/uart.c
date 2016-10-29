@@ -113,10 +113,14 @@ static int init_base(uart_t uart, uint32_t baudrate)
             return -1;
     }
 
+    /* Make sure dev is != NULL here, i.e. that the variable is assigned in
+     * all non-returning branches of the switch at the top of this function. */
+    assert(dev != NULL);
+
     /* uart_configure RX and TX pins, set pin to use alternative function mode */
-    gpio_init(tx_pin, GPIO_DIR_OUT, GPIO_NOPULL);
+    gpio_init(tx_pin, GPIO_OUT);
     gpio_init_af(tx_pin, af);
-    gpio_init(rx_pin, GPIO_DIR_IN, GPIO_NOPULL);
+    gpio_init(rx_pin, GPIO_IN);
     gpio_init_af(rx_pin, af);
 
     /* uart_configure UART to mode 8N1 with given baudrate */
@@ -157,8 +161,12 @@ void uart_write(uart_t uart, const uint8_t *data, size_t len)
             return;
     }
 
+    /* Make sure dev is != NULL here, i.e. that the variable is assigned in
+     * all non-returning branches of the switch at the top of this function. */
+    assert(dev != NULL);
+
     for (size_t i = 0; i < len; i++) {
-        while (!(dev->SR & USART_SR_TXE));
+        while (!(dev->SR & USART_SR_TXE)) {}
         dev->DR = data[i];
     }
 }
@@ -166,7 +174,7 @@ void uart_write(uart_t uart, const uint8_t *data, size_t len)
 static inline void irq_handler(uint8_t uartnum, USART_TypeDef *dev)
 {
     if (dev->SR & USART_SR_RXNE) {
-        char data = (char)dev->DR;
+        uint8_t data = (uint8_t)dev->DR;
         uart_config[uartnum].rx_cb(uart_config[uartnum].arg, data);
     }
     if (sched_context_switch_request) {

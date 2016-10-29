@@ -18,8 +18,10 @@
  * @author          Hauke Petersen <hauke.peterse@fu-berlin.de>
  */
 
-#ifndef __CPU_CONF_H
-#define __CPU_CONF_H
+#ifndef CPU_CONF_H
+#define CPU_CONF_H
+
+#include "cpu_conf_common.h"
 
 #include "LPC17xx.h"
 
@@ -36,9 +38,16 @@ extern "C" {
 #define CPU_FLASH_BASE                  LPC_FLASH_BASE
 /** @} */
 
+/**
+ * @brief   CPU ID configuration
+ * @{
+ */
+#define CPUID_LEN                       (16U)
+/* @} */
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __CPU_CONF_H */
+#endif /* CPU_CONF_H */
 /** @} */
